@@ -185,55 +185,55 @@ def _read_mixture_ids(metadata_csv: Path, id_column: str = "mixture_ID") -> List
 
 def build_arg_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
-        description="Sample room/mic/source parameters for each mixture_ID and write a reverb-params CSV."
+        description="Sample room/mic/source parameters for each mixture_ID and write reverb-params CSV(s)."
     )
 
-    # Keep legacy default stubs from your original driver :contentReference[oaicite:7]{index=7}
+    # Batch mode (recommended): generate params for all mix2_*.csv in a directory
+    p.add_argument(
+        "--metadata_dir",
+        type=str,
+        default=None,
+        help="If set, generate params for all mix2_*.csv under this directory.",
+    )
+    p.add_argument(
+        "--out_dir",
+        type=str,
+        default=None,
+        help="Output directory used with --metadata_dir (same filenames as inputs).",
+    )
+
+    # Single-file mode (legacy defaults preserved)
     p.add_argument(
         "--metadata_csv",
         type=str,
         default=str(Path("metadata") / "Libri2Mix" / "libri2mix_train-clean-360.csv"),
-        help="Input mixture metadata CSV containing mixture_ID.",
+        help="Input mixture metadata CSV containing mixture_ID (single-file mode).",
     )
     p.add_argument(
         "--out_csv",
         type=str,
         default=str(Path("reverb_params") / "Libri2Mix" / "libri2mix_train-clean-360.csv"),
-        help="Output reverb-params CSV path.",
+        help="Output reverb-params CSV path (single-file mode).",
     )
+
     p.add_argument("--id_column", type=str, default="mixture_ID")
 
-    # Randomness (keep default seed=17) :contentReference[oaicite:8]{index=8}
     p.add_argument("--seed", type=int, default=17)
-
-    # Defaults match original draw_params call :contentReference[oaicite:9]{index=9}
     p.add_argument("--num_mics", type=int, default=6)
     p.add_argument("--n_src", type=int, default=2)
     p.add_argument("--mic_width", type=float, default=0.05)
     p.add_argument("--min_spk_spk_theta_dist", type=float, default=15.0)
     p.add_argument("--reverb_level", type=str, default="medium", choices=["low", "medium", "high"])
 
-    # Performance / convenience
     p.add_argument("--overwrite", action="store_true")
     p.add_argument("--progress", action="store_true", help="Show tqdm progress bar.")
 
     return p
 
 
+
 def main() -> None:
     args = build_arg_parser().parse_args()
-
-    metadata_csv = Path(args.metadata_csv).expanduser().resolve()
-    out_csv = Path(args.out_csv).expanduser().resolve()
-
-    if not metadata_csv.exists():
-        raise FileNotFoundError(f"--metadata_csv not found: {metadata_csv}")
-
-    out_csv.parent.mkdir(parents=True, exist_ok=True)
-    if out_csv.exists() and not args.overwrite:
-        raise FileExistsError(f"Output exists: {out_csv}. Use --overwrite to overwrite.")
-
-    mixture_ids = _read_mixture_ids(metadata_csv, id_column=args.id_column)
 
     sampler_cfg = SamplerConfig(
         mic_width=float(args.mic_width),
@@ -242,26 +242,64 @@ def main() -> None:
         reverb_level=str(args.reverb_level),
         num_mics=int(args.num_mics),
     )
-
-    rng = np.random.default_rng(int(args.seed))
-
-    rows: List[Dict[str, object]] = []
-    iterator: Iterable[str]
-    if args.progress:
-        from tqdm import tqdm  # local import to keep base deps minimal
-        iterator = tqdm(mixture_ids, desc="sample params", total=len(mixture_ids))
-    else:
-        iterator = mixture_ids
-
-    for mid in iterator:
-        room_dim, mics, spk_pos, spk_doa, t60, _spk_dist = draw_params(rng=rng, cfg=sampler_cfg)
-        rows.append(_wide_schema_row(mid, room_dim, mics, spk_pos, spk_doa, t60))
-
     cols = _infer_output_columns(num_mics=sampler_cfg.num_mics, num_src=sampler_cfg.source_num)
-    df = pd.DataFrame.from_records(rows, columns=cols)
-    df.to_csv(out_csv, index=False)
 
-    print(f"[OK] wrote {out_csv} (rows={len(df)})")
+    # Helper to run one file
+    def run_one(metadata_csv: Path, out_csv: Path) -> None:
+        if not metadata_csv.exists():
+            raise FileNotFoundError(f"metadata csv not found: {metadata_csv}")
+
+        out_csv.parent.mkdir(parents=True, exist_ok=True)
+        if out_csv.exists() and not args.overwrite:
+            raise FileExistsError(f"Output exists: {out_csv}. Use --overwrite to overwrite.")
+
+        mixture_ids = _read_mixture_ids(metadata_csv, id_column=args.id_column)
+
+        rng = np.random.default_rng(int(args.seed))
+        rows: List[Dict[str, object]] = []
+
+        iterator: Iterable[str]
+        if args.progress:
+            from tqdm import tqdm
+            iterator = tqdm(mixture_ids, desc=f"sample params ({metadata_csv.name})", total=len(mixture_ids))
+        else:
+            iterator = mixture_ids
+
+        for mid in iterator:
+            room_dim, mics, spk_pos, spk_doa, t60, _spk_dist = draw_params(rng=rng, cfg=sampler_cfg)
+            rows.append(_wide_schema_row(mid, room_dim, mics, spk_pos, spk_doa, t60))
+
+        df = pd.DataFrame.from_records(rows, columns=cols)
+        df.to_csv(out_csv, index=False)
+        print(f"[OK] wrote {out_csv} (rows={len(df)})")
+
+    # Batch mode
+    if args.metadata_dir is not None:
+        md_dir = Path(args.metadata_dir).expanduser().resolve()
+        if not md_dir.exists():
+            raise FileNotFoundError(f"--metadata_dir not found: {md_dir}")
+
+        if args.out_dir is None:
+            raise ValueError("When using --metadata_dir, you must also provide --out_dir.")
+        out_dir = Path(args.out_dir).expanduser().resolve()
+        out_dir.mkdir(parents=True, exist_ok=True)
+
+        # Pattern is hard-coded as requested
+        md_files = sorted(md_dir.glob("mix2_*.csv"))
+        if not md_files:
+            raise FileNotFoundError(f"No files matched pattern 'mix2_*.csv' under: {md_dir}")
+
+        for md_csv in md_files:
+            out_csv = out_dir / md_csv.name
+            run_one(md_csv, out_csv)
+
+        return
+
+    # Single-file mode (legacy)
+    metadata_csv = Path(args.metadata_csv).expanduser().resolve()
+    out_csv = Path(args.out_csv).expanduser().resolve()
+    run_one(metadata_csv, out_csv)
+
 
 
 if __name__ == "__main__":
