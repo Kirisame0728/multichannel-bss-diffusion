@@ -46,4 +46,3 @@ temp/
 *.pem
 .env
 .env.*
-src/datasets/metadata/
