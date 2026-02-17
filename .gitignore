@@ -39,7 +39,6 @@ results/
 *.m4a
 *.aac
 data/
-datasets/
 cache/
 tmp/
 temp/
