@@ -1,0 +1,7 @@
+numpy
+pandas
+soundfile
+tqdm
+pyloudnorm
+scipy
+pyroomacoustics
