@@ -127,7 +127,7 @@ A one-click pipeline script is provided as `run_pipeline.sh`. It runs all stages
 ```bash
 bash run_pipeline.sh \
   --librispeech_dir /path/to/LibriSpeech \
-  --wham_dir /path/to/wham_noise/wham_noise \
+  --wham_dir /path/to/wham_noise \
   --out_dir /path/to/output/mix2_reverb_6ch \
   --subsets test-clean,train-clean-360 \
   --add_noise \
