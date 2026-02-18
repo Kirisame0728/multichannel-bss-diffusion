@@ -97,41 +97,21 @@ wham_noise/
 
 
 ## 2. Virtual environment setup
-
-### 2.1 Recommended (conda-forge)
+Use a conda environment (`mix_env`) and install Python dependencies via `pip`.
+### 2.1 Create environment (conda)
 
 ```bash
-conda create -n mixdata -c conda-forge -y \
-  python=3.10 numpy pandas scipy soundfile tqdm pyloudnorm pyroomacoustics
-conda activate mixdata
-
-python -c "import pyroomacoustics as pra; print('pyroomacoustics ok')"
-````
-
-### 2.2 Minimal requirements.txt (pip)
-
-This is the minimal Python-level dependency set needed by the pipeline:
-
-```txt
-numpy
-pandas
-soundfile
-tqdm
-pyloudnorm
-scipy
-pyroomacoustics
+conda create -n mix_env -y python=3.10
+conda activate mix_env
 ```
-
-Install via:
-
+2.2 Install dependencies (pip)
 ```bash
-python -m venv .venv
-source .venv/bin/activate
-pip install -U pip
 pip install -r requirements.txt
 ```
----
-
+2.3 Quick sanity check
+```bash
+python -c "import numpy, pandas, soundfile, scipy, pyloudnorm, pyroomacoustics; print('env ok')"
+```
 ## 3. One-click generation via shell script
 
 A one-click pipeline script is provided as `run_pipeline.sh`. It runs all stages in order:
