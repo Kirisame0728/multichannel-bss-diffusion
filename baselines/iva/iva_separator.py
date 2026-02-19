@@ -18,7 +18,7 @@ import torchaudio
 # ============================================================
 def _repo_root() -> str:
     here = os.path.abspath(os.path.dirname(__file__))
-    return os.path.abspath(os.path.join(here, ".."))
+    return os.path.abspath(os.path.join(here, "../.."))
 
 
 def _load_module_from_path(mod_name: str, file_path: str):
