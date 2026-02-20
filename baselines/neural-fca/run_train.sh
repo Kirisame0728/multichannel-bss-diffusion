@@ -1,0 +1,11 @@
+python train_neural_fca.py \
+  --root_dir "/mnt/f/libri_train_360_2sp_6ch_8k" \
+  --train_split train \
+  --exp_dir exp/neural-fca \
+  --n_src 2 \
+  --select_channels 0,2,4 \
+  --batch_size 4 \
+  --n_hiter 5 \
+  --epochs 60 \
+  --limit 1000 \
+  --max_len 16000
