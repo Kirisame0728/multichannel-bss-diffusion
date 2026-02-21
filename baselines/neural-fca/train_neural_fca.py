@@ -123,6 +123,11 @@ def main():
     p.add_argument("--kl_ratio", type=float, default=0.5)
     p.add_argument("--kl_max_beta", type=float, default=1.0)
 
+    p.add_argument("--kl_max_beta_first", type=float, default=10.0,
+                   help="max KL beta for early training (paper: 10.0 for first 50 epochs)")
+    p.add_argument("--kl_first_epochs", type=int, default=50,
+                   help="number of epochs to use kl_max_beta_first (paper: 50)")
+
     p.add_argument("--log_interval", type=int, default=20)
 
     p.add_argument("--limit", type=int, default=-1, help="use only first N training utterances; -1=all")
@@ -176,7 +181,9 @@ def main():
     last_path = os.path.join(args.exp_dir, "last.pt")
 
     for ep in range(1, args.epochs + 1):
-        beta = cyclic_beta(ep, args.kl_cycle, args.kl_ratio, args.kl_max_beta)
+        # beta = cyclic_beta(ep, args.kl_cycle, args.kl_ratio, args.kl_max_beta)
+        max_beta = args.kl_max_beta_first if ep <= args.kl_first_epochs else args.kl_max_beta
+        beta = cyclic_beta(ep, args.kl_cycle, args.kl_ratio, max_beta)
 
         enc.train()
         dec.train()
@@ -184,8 +191,10 @@ def main():
 
         losses = []
         t0 = time.time()
-        for step, (mix_btc, _ilens, _utt_ids) in enumerate(train_loader, start=1):
+        for step, (mix_btc, ilens, _utt_ids) in enumerate(train_loader, start=1):
             mix_btc = mix_btc.to(device)                # (B,T,C)
+            ilens = ilens.to(device)
+            mix_btc = mix_btc[:, : int(ilens.max().item()), :]  # truncate padding BEFORE STFT
             x = stft_mc(mix_btc, args.n_fft, args.hop, window)  # (B,T',F,M)
 
             # scale normalization
@@ -193,6 +202,7 @@ def main():
             x = x / scale
 
             B, TT, F, M = x.shape
+            norm_tf = float(TT * F)
             xx = batch_to_xx(x)
 
             q = enc(x, distribution=True)               # Normal
@@ -220,10 +230,11 @@ def main():
             torch.nn.utils.clip_grad_norm_(list(enc.parameters()) + list(dec.parameters()), 5.0)
             optim.step()
 
-            losses.append(float(loss.item()))
+            # losses.append(float(loss.item()))
+            losses.append(float(loss.item()) / norm_tf)
             if step % args.log_interval == 0 or step == 1:
                 it_s = step / max(time.time() - t0, 1e-9)
-                print(f"  [batch {step:05d}/{len(train_loader)}] loss={loss.item():.4f} beta={beta:.3f} ({it_s:.2f} it/s)")
+                print(f"  [batch {step:05d}/{len(train_loader)}] loss={loss.item()/norm_tf:.6f} beta={beta:.3f} ({it_s:.2f} it/s)")
 
         tr = float(np.mean(losses)) if losses else float("nan")
         print(f"[E{ep:03d}] train={tr:.4f}")

@@ -1,5 +1,25 @@
 import torch
 
+def safe_cholesky(Y: torch.Tensor, eps: float = 1e-4, max_tries: int = 6) -> torch.Tensor:
+    """
+    Robust Cholesky for batched Hermitian matrices.
+    If not PD, increase diagonal loading (jitter) progressively.
+    """
+    M = Y.shape[-1]
+    I = torch.eye(M, dtype=Y.dtype, device=Y.device)
+    jitter = eps
+
+    # ensure Hermitian to reduce numerical issues
+    Yh = 0.5 * (Y + Y.conj().transpose(-1, -2))
+
+    for _ in range(max_tries):
+        try:
+            return torch.linalg.cholesky(Yh + jitter * I)
+        except RuntimeError:
+            jitter *= 10.0
+
+    # If still failing, do one last attempt with a large jitter.
+    return torch.linalg.cholesky(Yh + jitter * I)
 
 def regularized_inverse(A: torch.Tensor, eps: float = 1e-6) -> torch.Tensor:
     M = A.shape[-1]
@@ -12,7 +32,7 @@ def init_H(F: int, K: int, M: int, device, dtype=torch.complex64) -> torch.Tenso
     return I[None, None, :, :].repeat(F, K, 1, 1).contiguous()
 
 
-def build_Y(lm: torch.Tensor, H: torch.Tensor, eps: float = 1e-6):
+def build_Y(lm: torch.Tensor, H: torch.Tensor, eps: float = 1e-4):
     """
     lm: (T,F,K) >=0
     H:  (F,K,M,M) complex
@@ -22,6 +42,7 @@ def build_Y(lm: torch.Tensor, H: torch.Tensor, eps: float = 1e-6):
     M = Y.shape[-1]
     I = torch.eye(M, dtype=Y.dtype, device=Y.device)
     Y = Y + eps * I[None, None, :, :]
+    Y = 0.5 * (Y + Y.conj().transpose(-1, -2))
     return Y, Yk
 
 
@@ -31,9 +52,14 @@ def nll_gaussian(xx: torch.Tensor, lm: torch.Tensor, H: torch.Tensor, eps: float
     """
     Y, _ = build_Y(lm, H, eps=eps)
     Yi = regularized_inverse(Y, eps=eps)
-    _, logabs = torch.linalg.slogdet(Y)                  # (T,F)
-    tr = torch.einsum("tfmn,tfmn->tf", xx, Yi)           # trace(xx @ Yi)
-    return (logabs.real + tr.real).sum()
+    # logdet(Y) via Cholesky: stable and real for Hermitian PD matrices
+    # L = torch.linalg.cholesky(Y)  # (T,F,M,M)
+    L = safe_cholesky(Y, eps=eps, max_tries=6)
+    diag = torch.diagonal(L, dim1=-2, dim2=-1).real
+    logdet = 2.0 * torch.log(diag + 1e-12).sum(dim=-1)  # (T,F)
+
+    tr = torch.einsum("tfmn,tfmn->tf", xx, Yi).real
+    return (logdet + tr).sum()
 
 
 @torch.no_grad()

@@ -1,9 +1,16 @@
-python baselines/neural-fca/infer_neural_fca.py \
-  --root_dir /mnt/d/datasets/your_mix2_root \
+python infer_neural_fca.py \
+  --root_dir "/mnt/d/datasets/libri_test_2sp_6ch_8k" \
   --split test \
-  --save_dir results/neural-fca/run1 \
-  --ckpt baselines/neural-fca/exp/run1/last.pt \
+  --save_dir "/mnt/f/libri_separation_outputs/neural-fca" \
+  --ckpt exp/neural-fca/last.pt \
   --num_speakers 2 \
   --select_channels 0,2,4 \
   --n_samples 500 \
-  --verbose
+  --verbose \
+  --compute_pesq \
+  --compute_estoi \
+  --n_fft 512 \
+  --hop 128 \
+  --n_iter 30 \
+  --n_ziter 50 \
+  --n_hiter 5

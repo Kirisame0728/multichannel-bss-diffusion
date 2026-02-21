@@ -157,23 +157,43 @@ def main():
         ref = sources[:, 0, :].cpu()          # reference mic
 
         # separate.py uses librosa; pass numpy mix (C,T)
+        # est_np = finetune(
+        #     mixture.cpu().numpy(),
+        #     enc,
+        #     dec,
+        #     n_iter=args.n_iter,
+        #     n_ziter=args.n_ziter,
+        #     n_hiter=args.n_hiter,
+        #     out_ch=args.out_ch,
+        # )  # (K,T) numpy
         est_np = finetune(
             mixture.cpu().numpy(),
             enc,
             dec,
+            n_fft=args.n_fft,
+            hop=args.hop,
             n_iter=args.n_iter,
             n_ziter=args.n_ziter,
             n_hiter=args.n_hiter,
             out_ch=args.out_ch,
-        )  # (K,T) numpy
+            lr_z=getattr(args, "lr_z", 0.2),
+            eps=getattr(args, "eps", 1e-4),
+            device=device,
+        )
         est = torch.from_numpy(np.asarray(est_np)).float().cpu()
 
         ensure_dir(utt_dir)
         for k in range(args.num_speakers):
             torchaudio.save(os.path.join(utt_dir, f"s{k+1}.wav"), est[k].unsqueeze(0), sample_rate=args.sample_rate)
 
-        est_sdr = scale_to_ref(est, ref)
-        sdr = float(batch_SDR_torch(est_sdr.unsqueeze(0), ref.unsqueeze(0)).item())
+        # est_sdr = scale_to_ref(est, ref)
+        # sdr = float(batch_SDR_torch(est_sdr.unsqueeze(0), ref.unsqueeze(0)).item())
+        # sisdr = float(sisdr_batch(est, ref))
+
+        # SDR: batch_SDR_torch already does optimal scaling internally
+        sdr = float(batch_SDR_torch(est.unsqueeze(0), ref.unsqueeze(0)).item())
+
+        # SI-SDR: sisdr_batch already uses standard projection-based scaling internally
         sisdr = float(sisdr_batch(est, ref))
 
         pesq = float("nan")

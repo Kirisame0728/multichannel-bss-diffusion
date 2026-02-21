@@ -112,7 +112,7 @@ Outputs are written to `--save_dir/`:
 
 ### TF-GridNet paper
 
-Z. Wang, S. Cornell, S. Choi, Y. Lee, B. Kim, and S. Watanabe, "TF-GridNet: Making Time-Frequency Domain Models Great Again for Monaural Speaker Separation," *arXiv*, 2023, [Online]. Available: https://arxiv.org/abs/2209.03952.
+Z.-Q. Wang, S. Cornell, S. Choi, Y. Lee, B.-Y. Kim, and S. Watanabe, “TF-GRIDNET: Making time-frequency domain models great again for monaural speaker separation,” in Proc. IEEE Int. Conf. Acoust., Speech Signal Process. (ICASSP), 2023, pp. 1–5, doi: 10.1109/ICASSP49357.2023.10094992. Available: https://arxiv.org/abs/2209.03952.
 
 ### Code reference
 
@@ -120,3 +120,10 @@ TF-GridNet implementation is adapted based on ESPnet:
 
 * [https://github.com/espnet/espnet](https://github.com/espnet/espnet)
 
+### Neural-FCA paper and code
+
+Y. Bando, K. Sekiguchi, Y. Masuyama, A. A. Nugraha, M. Fontaine, and K. Yoshii, “Neural full-rank spatial covariance analysis for blind source separation,” IEEE Signal Processing Letters, vol. 28, pp. 1670–1674, 2021, doi: 10.1109/LSP.2021.3101699.
+
+Code:
+
+* [https://github.com/b-sigpro/neural-fca.spl2021](https://github.com/b-sigpro/neural-fca.spl2021)
