@@ -212,7 +212,8 @@ def main():
             # KL(q||N(0,I))
             mu, std = q.loc, q.scale
             kl = 0.5 * (mu.pow(2) + std.pow(2) - 2.0 * torch.log(std + 1e-12) - 1.0)
-            kl = kl.sum(dim=list(range(1, kl.dim()))).mean()
+            # kl = kl.sum(dim=list(range(1, kl.dim()))).mean()
+            kl = kl.mean()
 
             # per-sample H updates (baseline, simplest & stable)
             nlls = []
@@ -221,7 +222,9 @@ def main():
                 for _ in range(int(args.n_hiter)):
                     H = update_H_em(xx[b], lm[b], H)
                 nlls.append(nll_gaussian(xx[b], lm[b], H))
-            nll = torch.stack(nlls).mean()
+            # nll = torch.stack(nlls).mean()
+            num_elements = B * TT * F
+            nll = torch.stack(nlls).sum() / num_elements
 
             loss = nll + float(beta) * kl
 
@@ -231,10 +234,10 @@ def main():
             optim.step()
 
             # losses.append(float(loss.item()))
-            losses.append(float(loss.item()) / norm_tf)
+            losses.append(float(loss.item()))
             if step % args.log_interval == 0 or step == 1:
                 it_s = step / max(time.time() - t0, 1e-9)
-                print(f"  [batch {step:05d}/{len(train_loader)}] loss={loss.item()/norm_tf:.6f} beta={beta:.3f} ({it_s:.2f} it/s)")
+                print(f"  [batch {step:05d}/{len(train_loader)}] loss={loss.item():.6f} beta={beta:.3f} ({it_s:.2f} it/s)")
 
         tr = float(np.mean(losses)) if losses else float("nan")
         print(f"[E{ep:03d}] train={tr:.4f}")
