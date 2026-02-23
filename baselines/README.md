@@ -10,13 +10,13 @@ This folder contains three baselines:
 From repo root (recommended), or from `baselines/` if your `iva_separator.py` already bootstraps `sys.path`.
 
 ```bash
-bash baselines/run_iva.sh --root_dir "/path/to/test_dataset_root" --save_dir "/path/to/output_dir"
+bash run_iva.sh --root_dir "/path/to/test_dataset_root" --save_dir "/path/to/output_dir"
 ````
 
 If you prefer calling Python directly:
 
 ```bash
-python baselines/iva_separator.py \
+python iva_separator.py \
   --root_dir "/path/to/test_dataset_root" \
   --split "test" \
   --save_dir "/path/to/output_dir" \
@@ -49,13 +49,13 @@ Outputs are written to `--save_dir/`:
 ### Train
 
 ```bash
-bash baselines/tfgridnet/run_train.sh /path/to/train_dataset_root
+bash run_train.sh /path/to/train_dataset_root
 ```
 
 Or call Python directly:
 
 ```bash
-python baselines/tfgridnet/train_tfgridnet.py \
+python train_tfgridnet.py \
   --root_dir "/path/to/train_dataset_root" \
   --train_split "train" \
   --exp_dir "exp/tfgridnet" \
@@ -78,13 +78,13 @@ python baselines/tfgridnet/train_tfgridnet.py \
 ### Inference + Evaluation
 
 ```bash
-bash baselines/tfgridnet/run_infer.sh --root_dir "/path/to/test_dataset_root" --save_dir "/path/to/output_dir"
+bash run_infer.sh --root_dir "/path/to/test_dataset_root" --save_dir "/path/to/output_dir"
 ```
 
 Or call Python directly:
 
 ```bash
-python baselines/tfgridnet/infer_tfgridnet.py \
+python infer_tfgridnet.py \
   --root_dir "/path/to/test_dataset_root" \
   --split "test" \
   --ckpt "exp/tfgridnet/last.pt" \
@@ -107,6 +107,63 @@ Outputs are written to `--save_dir/`:
 * `per_utt.csv`
 * `summary.csv`
 * `<utt_id>/s1.wav, s2.wav, ...`
+
+
+## Neural-FCA
+
+### Train
+```bash
+bash run_train.sh /path/to/train_dataset_root
+```
+Or call Python directly:
+```bash
+python train_neural_fca.py \
+  --root_dir "/path/to/train_dataset_root" \
+  --train_split train \
+  --exp_dir exp/neural-fca \
+  --n_src 2 \
+  --target_mode "early+late" \
+  --select_channels 0,2,4 \
+  --batch_size 4 \
+  --num_workers 2 \
+  --n_hiter 5 \
+  --epochs 100 \
+  --lr 5e-4 \
+  --n_fft 512 \
+  --hop 128 \
+  --kl_cycle 10 \
+  --kl_ratio 0.5 \
+  --kl_max_beta 1.0 \
+  --kl_max_beta_first 1.0 \
+  --kl_first_epochs 10 \
+  --limit 1000 \
+  --max_len 16000 \
+  --log_interval 20
+```
+
+### Inference + Evaluation
+```bash
+bash run_infer.sh --root_dir "/path/to/test_dataset_root" --save_dir "/path/to/output_dir"
+```
+Or call Python directly:
+```bash
+python infer_neural_fca.py \
+  --root_dir /path/to/test_dataset_root" \
+  --split test \
+  --save_dir "/path/to/output_dir" \
+  --ckpt exp/neural-fca/last.pt \
+  --num_speakers 2 \
+  --select_channels 0,2,4 \
+  --n_samples 500 \
+  --verbose \
+  --compute_pesq \
+  --compute_estoi \
+  --n_fft 512 \
+  --hop 128 \
+  --n_iter 20 \
+  --n_ziter 40 \
+  --n_hiter 5
+```
 
 ## Reference
 
