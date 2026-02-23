@@ -3,7 +3,7 @@ import torch
 import torchaudio
 import scipy.signal
 import numpy as np
-import src.utils.logging as utils_logging
+import utils.logging as utils_logging
 
 # this is a third version that joinly optimizes all speakers steering vector
 import torch
@@ -12,8 +12,8 @@ import torch.nn.functional as F
 
 # from src.FCP import FCP_torch_2, compute_inverse_power
 # from src.FCP import FCP_V1, FCP_V2
-from src.FCP import FCP_V1
-from src.IVA import IVA
+from FCP import FCP_V1
+from IVA import IVA
 
 class Sampler():
 

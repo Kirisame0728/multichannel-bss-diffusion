@@ -3,8 +3,8 @@ import torch.nn.functional as F
 
 import torch
 import torchiva
-from sdr import batch_SDR_torch
-from src.stft import STFT
+from src.metrics.sdr import batch_SDR_torch
+from stft import STFT
 
 '''
 for reverberation speaker separation, recommending:

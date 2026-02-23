@@ -3,7 +3,6 @@ import torch
 import time
 import numpy as np
 import torchaudio
-import src.utils as utils
 import plotly.express as px
 import soundfile as sf
 import plotly.graph_objects as go
@@ -11,7 +10,7 @@ import pandas as pd
 import plotly
 import scipy.signal as sig
 
-from src.CQT_nsgt import CQT_cpx
+from CQT_nsgt import CQT_cpx
 
 def do_stft(noisy, clean=None, win_size=2048, hop_size=512, device="cpu", DC=True):
     """
