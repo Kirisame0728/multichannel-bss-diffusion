@@ -120,7 +120,7 @@ Or call Python directly:
 python train_neural_fca.py \
   --root_dir "/path/to/train_dataset_root" \
   --train_split train \
-  --exp_dir exp/neural-fca \
+  --exp_dir exp/neural_fca \
   --n_src 2 \
   --target_mode "early+late" \
   --select_channels 0,2,4 \
