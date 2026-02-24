@@ -3,8 +3,10 @@ wandb:
   project: "SpeechDiffusionUnconditional"
   run_name: "raw_WAV_unet_att_8S_3S_8000hz"
 
-model_dir: "experiments/raw_WAV_unet_att_8S_3S_8000hz"
-
+#model_dir: "experiments/raw_WAV_unet_att_8S_3S_8000hz"
+exp_root: exps/${now:%y%m%d-%H%M%S}
+tb_dir: ${exp_root}/tb
+model_dir: ${exp_root}/raw_WAV_unet_att_8S_3S_8000hz
 # architecture: "unet_CQT" #"unet"
 # architecture: "unet_STFT" #"unet"
 # architecture: "unet_1d" #"unet"
@@ -20,7 +22,7 @@ num_workers: 4 #useful to speed up the dataloader
 device: "cpu" #it will be updated in the code, no worries
 
 dataset:
-  root: 'libritts_path' # folder containing LibriTTS folder
+  root: '/mnt/f/train-clean-100' # folder containing LibriTTS folder
   target_sampling_rate: 8000
   audio_len: 65536
   min_audio_len: 24000
@@ -200,13 +202,28 @@ sde_kwargs:
   sigma_max: 1
 
      
+#hydra:
+#  job:
+#    config:
+#      # configuration for the ${hydra.job.override_dirname} runtime variable
+#      override_dirname:
+#        kv_sep: '='
+#        item_sep: ','
+#        # Remove all paths, as the / in them would mess up things
+#        exclude_keys: ['path_experiment',
+#          'hydra.job_logging.handles.file.filename']
+
 hydra:
+  run:
+    dir: ${exp_root}
+  output_subdir: .hydra
+
   job:
+    chdir: false
     config:
-      # configuration for the ${hydra.job.override_dirname} runtime variable
       override_dirname:
         kv_sep: '='
         item_sep: ','
-        # Remove all paths, as the / in them would mess up things
-        exclude_keys: ['path_experiment',
-          'hydra.job_logging.handles.file.filename']
+        exclude_keys:
+          - path_experiment
+          - hydra.job_logging.handles.file.filename
