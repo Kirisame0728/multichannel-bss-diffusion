@@ -98,9 +98,6 @@ class Learner:
         # TensorBoard logger (replaces wandb)
         self.tb = None
         if self.log:
-            # tb_dir = os.path.join(self.model_dir, "tb")
-            # os.makedirs(tb_dir, exist_ok=True)
-            # self.tb = SummaryWriter(log_dir=tb_dir)
             exp_root = os.path.dirname(self.model_dir.rstrip("/"))
             tb_dir = os.path.join(exp_root, "tb")
             os.makedirs(tb_dir, exist_ok=True)

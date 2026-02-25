@@ -6,7 +6,7 @@ wandb:
 #model_dir: "experiments/raw_WAV_unet_att_8S_3S_8000hz"
 exp_root: exps/${now:%y%m%d-%H%M%S}
 tb_dir: ${exp_root}/tb
-model_dir: "model_parameters/raw_WAV_unet_att_8S_3S_8000hz"
+model_dir: ${exp_root}/raw_WAV_unet_att_8S_3S_8000hz
 
 # architecture: "unet_1d" #"unet"
 architecture: "unet_1d_att" #"unet"

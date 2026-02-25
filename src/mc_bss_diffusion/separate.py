@@ -256,6 +256,7 @@ def main():
     parser.add_argument("--config_path", type=str, default="configs/mc_bss_diffusion/conf_libritts_unet1d_attention_8k.yaml")
     parser.add_argument("--architecture", type=str, default="unet_1d")
     parser.add_argument("--checkpoint", type=str, default="weights-459999.pt")
+    parser.add_argument("--model_dir", type=str, default=None)
 
     parser.add_argument("--root_dir", type=str, required=True)
     parser.add_argument("--split", type=str, default="test")
@@ -317,9 +318,21 @@ def main():
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    dirname = os.getcwd()
-    args.model_dir = os.path.join(dirname, str(args.model_dir))
-    os.makedirs(args.model_dir, exist_ok=True)
+    # dirname = os.getcwd()
+    # args.model_dir = os.path.join(dirname, str(args.model_dir))
+    # os.makedirs(args.model_dir, exist_ok=True)
+    # If CLI provides --model_dir, override YAML model_dir
+    if cfg.model_dir is not None and str(cfg.model_dir).strip() != "":
+        args.model_dir = cfg.model_dir
+
+    # Normalize: only prepend cwd for relative paths
+    args.model_dir = str(args.model_dir)
+    if not os.path.isabs(args.model_dir):
+        args.model_dir = os.path.join(os.getcwd(), args.model_dir)
+
+    # NOTE: for inference we should NOT create model_dir automatically,
+    # because a missing dir is a real error (wrong path).
+    # So we don't os.makedirs(args.model_dir) here.
 
     args.architecture = cfg.architecture
     args.inference.checkpoint = cfg.checkpoint

@@ -36,13 +36,6 @@ def run(args):
 
     #choose gpu as the device if possible
     device=torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-    # dirname = os.path.dirname(__file__)
-    #
-    # #define the path where weights will be loaded and saved
-    # args.model_dir = os.path.join(dirname, str(args.model_dir))
-    # if not os.path.exists(args.model_dir):
-    #     os.makedirs(args.model_dir)
     args.model_dir = str(args.model_dir)
     os.makedirs(args.model_dir, exist_ok=True)
 

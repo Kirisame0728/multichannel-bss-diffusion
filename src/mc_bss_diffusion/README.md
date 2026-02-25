@@ -151,48 +151,32 @@ bash run_test.sh
 
 ### 6.2 Using a provided pretrained model (model_parameters)
 
-If a pretrained package `model_parameters` is available:
 
-1. Download `model_parameters` and extract it.
-2. Place the extracted folder **directly under** `mc_bss_diffusion/`:
+1. Download and extract a pretrained checkpoint folder (it must contain `weights-*.pt`). You may place it **anywhere** (inside or outside this repo).
+2. Run inference by specifying `<model_dir>/<checkpoint>`:
+- **Recommended (absolute path, works from any directory):**
+```bash
+bash run_infer.sh \
+  --model_dir "/path/to/raw_WAV_unet_att_8S_3S_8000hz" \
+  --checkpoint "weights-139999.pt"
 ```
-mc_bss_diffusion/
-└── model_parameters/
-    └── raw_WAV_unet_att_8S_3S_8000hz/
-        ├── weights-xxxxx.pt
-        └── ...
-```
-3. Edit `conf/conf_libritts_unet1d_attention_8k.yaml`:
-Set `model_dir` to the extracted weights directory (relative paths are supported):
-```yaml
-model_dir: "model_parameters/raw_WAV_unet_att_8S_3S_8000hz"
-```
-and in `run_infer.sh`:
-```shell
---checkpoint 'weights-139999.pt'
-```
-
-4. Ensure `run_test.sh` points to the correct YAML and uses a valid dataset root/save_dir.
 
 ### 6.3 Using checkpoints from training
-If training produced checkpoints in:
+If training produced checkpoints like:
 
 ```
-exps/raw_WAV_unet_att_8S_3S_8000hz/weights-*.pt
-```
-
-Then set in the YAML: (line 9 in `conf_libritts_unet1d_attention_8k.yaml`)
-
-```yaml
-model_dir: "exps/raw_WAV_unet_att_8S_3S_8000hz"
-```
-and in `run_infer.sh`:
-```shell
---checkpoint '<your-weights.pt>'
+exps/260224-183434/raw_WAV_unet_att_8S_3S_8000hz/weights-*.pt
 ```
 
 
-No code changes are required if `separate.py` is already loading via `model_dir + inference.checkpoint`.
+Run inference by specifying `<model_dir>/<checkpoint>`:
+
+- **Recommended (absolute path):**
+```bash
+bash run_infer.sh \
+  --model_dir "exps/260224-183434/raw_WAV_unet_att_8S_3S_8000hz" \
+  --checkpoint "weights-139999.pt"
+```
 
 ### 6.4 Outputs
 
