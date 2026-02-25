@@ -85,9 +85,12 @@ pip install -r requirements.txt
 ## 3. Dataset
 
 Training uses `torchaudio.datasets.LIBRITTS` via `dataset_libritts` (wired inside `train.py` / `dataloaders/dataset_libritts.py` in the larger project, but here it is configured through Hydra YAML).
-You must set the dataset root directory in the YAML:
 
-- `dataset.root` should point to the directory that contains the `LibriTTS/` folder.
+You need to first download LibriTTS dataset in https://openslr.org/60/.
+
+**You must set the dataset root directory in the YAML:**
+
+- `dataset.root` should point to the directory that contains the `LibriTTS/` folder. (**line 4** in conf/conf_libritts_unet1d_attention_8k.yaml)
 
 - The expected structure is typically:
 
@@ -96,7 +99,6 @@ You must set the dataset root directory in the YAML:
   <dataset.root>/LibriTTS/train-clean-360/...
   ...
   ```
-You need to first download LibriTTS dataset in https://openslr.org/60/.
 
 ---
 
@@ -298,3 +300,5 @@ Inference writes outputs into the specified `save_dir`, organized by:
 ## 9. Credits
 
 **This project is based on ArrayDPS:**
+
+Z. Xu, X. Fan, Z.-Q. Wang, X. Jiang, and R. R. Choudhury, “ArrayDPS: Unsupervised Blind Speech Separation with a Diffusion Prior,” arXiv preprint arXiv:2505.05657, May 2025.
