@@ -48,3 +48,4 @@ temp/
 .env.*
 experiments/
 exps/
+model_parameters/
