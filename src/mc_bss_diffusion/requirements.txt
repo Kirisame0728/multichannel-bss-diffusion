@@ -1,0 +1,34 @@
+# -----------------------
+# Core
+# -----------------------
+numpy==1.26.4
+scipy>=1.10,<1.13
+PyYAML>=6.0
+tqdm>=4.66
+dotmap>=1.3
+
+# -----------------------
+# PyTorch / Audio
+# -----------------------
+torch>=2.1
+torchaudio>=2.1
+soundfile>=0.12
+
+# -----------------------
+# Training config / logging
+# -----------------------
+hydra-core>=1.3
+omegaconf>=2.3
+tensorboard>=2.14
+
+# -----------------------
+# Metrics (if your eval_metrics.py uses them)
+# -----------------------
+pesq>=0.0.4
+pystoi>=0.3.3
+
+# -----------------------
+# Optional (only if still used somewhere)
+# -----------------------
+pandas>=2.1,<3
+matplotlib>=3.7
