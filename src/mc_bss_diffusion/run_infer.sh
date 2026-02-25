@@ -4,7 +4,7 @@ set -euo pipefail
 python separate.py \
   --config_path 'conf/conf_libritts_unet1d_attention_8k.yaml' \
   --architecture 'unet_1d_att' \
-  --checkpoint 'weights-839999_correct.pt' \
+  --checkpoint 'weights-139999.pt' \
   --root_dir "/mnt/d/datasets/libri_test_2sp_6ch_8k" \
   --num_speakers 2 \
   --reverb 1 \

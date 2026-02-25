@@ -12,6 +12,14 @@ from omegaconf import OmegaConf
 from torch.utils.data import DataLoader
 import numpy as np
 
+import sys
+from pathlib import Path
+
+# Make repo root importable so "import src...." works when running inside src/mc_bss_diffusion/
+REPO_ROOT = Path(__file__).resolve().parents[2]  # .../<repo>/
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
 def run(args):
     """Loads all the modules and starts the training
         
@@ -47,7 +55,7 @@ def run(args):
     # print("Training on: ",args.dset.name)
 
     #prepare the dataset loader
-    import src.dataset_libritts as dataset
+    from src.dataloaders import dataset_libritts as dataset
     args.dataset.root = hydra.utils.to_absolute_path(args.dataset.root)
     dataset_train=dataset.LIBRITTS_TrainSet(
 
