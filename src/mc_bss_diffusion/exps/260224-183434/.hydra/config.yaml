@@ -1,0 +1,226 @@
+wandb:
+  entity: your-wandb-entity
+  project: SpeechDiffusionUnconditional
+  run_name: raw_WAV_unet_att_8S_3S_8000hz
+exp_root: exps/${now:%y%m%d-%H%M%S}
+tb_dir: ${exp_root}/tb
+model_dir: ${exp_root}/raw_WAV_unet_att_8S_3S_8000hz
+architecture: unet_1d_att
+sample_rate: 8000
+audio_len: 65536
+num_workers: 4
+device: cpu
+dataset:
+  root: /mnt/f/train-clean-100
+  target_sampling_rate: 8000
+  audio_len: 65536
+  min_audio_len: 24000
+  std_norm: false
+  std: 0.057
+sashimi:
+  unconditional: false
+  in_channels: 1
+  out_channels: 2
+  diffusion_step_embed_dim_in: 128
+  diffusion_step_embed_dim_mid: 512
+  diffusion_step_embed_dim_out: 512
+  unet: true
+  d_model: 64
+  n_layers: 6
+  pool:
+  - 4
+  - 4
+  expand: 2
+  ff: 2
+  L: ${audio_len}
+unet_wav:
+  in_channels: 1
+  channels: 256
+  patch_factor: 16
+  patch_blocks: 1
+  resnet_groups: 8
+  kernel_multiplier_downsample: 2
+  kernel_sizes_init:
+  - 1
+  - 3
+  - 7
+  multipliers:
+  - 1
+  - 2
+  - 4
+  - 4
+  - 4
+  - 4
+  - 4
+  factors:
+  - 4
+  - 4
+  - 4
+  - 2
+  - 2
+  - 2
+  num_blocks:
+  - 2
+  - 2
+  - 2
+  - 2
+  - 2
+  - 2
+  attentions:
+  - false
+  - false
+  - false
+  - true
+  - true
+  - true
+  attention_heads: 8
+  attention_features: 128
+  attention_multiplier: 2
+  use_nearest_upsample: false
+  use_skip_scale: true
+  use_attention_bottleneck: true
+  use_context_time: true
+stft:
+  win_size: 1024
+  hop_size: 256
+  model:
+    win_size: 1024
+    hop_size: 256
+cqt:
+  binsoct: 64
+  numocts: 7
+  fmax: nyq
+  fmin: 150
+  use_norm: false
+unet:
+  padding: zeros
+  use_attention: true
+  num_att_heads: 4
+  use_gru: true
+  conditioner:
+    use_conditioning: true
+  depth: 9
+  Ns:
+  - 64
+  - 128
+  - 256
+  - 512
+  - 512
+  - 512
+  - 512
+  - 1024
+  - 1024
+  - 1024
+  Ss:
+  - 2
+  - 2
+  - 2
+  - 2
+  - 2
+  - 2
+  - 2
+  - 2
+  - 2
+save_model: true
+unet_STFT:
+  use_embedding_y_lpf: false
+  use_attention: false
+  depth: 6
+  use_fencoding: true
+  nlayers:
+  - 8
+  - 7
+  - 6
+  - 5
+  - 4
+  - 3
+  Ns:
+  - 64
+  - 128
+  - 256
+  - 512
+  - 1024
+  - 1024
+  - 1024
+  Ss:
+  - 2
+  - 2
+  - 2
+  - 2
+  - 2
+  - 2
+lr: 0.0001
+batch_size: 16
+ema_rate: 0.9999
+scheduler_step_size: 60000
+scheduler_gamma: 0.8
+restore: false
+checkpoint_id: None
+log: true
+log_interval: 50
+sample_interval: 5000
+save_interval: 20000
+n_bins: 20
+inference:
+  mode: unconditional
+  load:
+    load_mode: single_example
+    audio: None
+    data_directory: None
+    seg_size: None
+    seg_idx: None
+  checkpoint: weights-200000.pt
+  exp_name: testing
+  T: 35
+  num_sample_chunks: 1
+  unconditional:
+    num_samples: 1
+  xi: 0
+  data_consistency: false
+  sampler: deterministic
+  noise_in_observations_SNR: None
+  bandwidth_extension:
+    decimate:
+      factor: 1
+    filter:
+      type: firwin
+      fc: 1000
+      order: 200
+      fir_order: 600
+      beta: 1
+      ripple: 0.05
+      resample:
+        fs: 2000
+      biquad:
+        Q: 0.707
+  inpainting:
+    gap_length: 1500
+    start_gap_idx: None
+  comp_sens:
+    percentage: 5
+  phase_retrieval:
+    win_size: 1024
+    hop_size: 256
+  max_thresh_grads: 1
+  type_spec: linear
+  declipping:
+    SDR: 3
+extra_info: no extra info
+sde_type: VE_elucidating
+diffusion_parameters:
+  sigma_data: 0.057
+  sigma_min: 1.0e-06
+  sigma_max: 10
+  P_mean: -1.2
+  P_std: 1.2
+  ro: 13
+  ro_train: 10
+  Schurn: 5
+  Snoise: 1
+  Stmin: 0
+  Stmax: 50
+sde_kwargs:
+  gamma: None
+  eta: None
+  sigma_min: 0.0001
+  sigma_max: 1
