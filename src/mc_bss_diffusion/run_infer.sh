@@ -11,11 +11,11 @@ python separate.py \
   --reverb 1 \
   --n_channels 3 \
   --num_steps 400 \
-  --max_trials 5 \
+  --max_trials 3 \
   --snr_stop 35 \
   --max_trials2 2 \
   --snr_stop2 14 \
-  --max_trials3 5 \
+  --max_trials3 3 \
   --snr_stop3 10 \
   --sigma_max 0.8 \
   --rho 10 \

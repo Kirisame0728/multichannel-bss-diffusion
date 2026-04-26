@@ -1,4 +1,3 @@
-# src/mc_bss_diffusion/separate.py
 import os
 import json
 import csv
@@ -121,6 +120,10 @@ def modify_and_create_save_dir(config: dict) -> None:
     print(f"[save_dir] {new_save_dir}")
 
 
+def _is_single_channel_tensor(x: torch.Tensor) -> bool:
+    return x.ndim >= 2 and x.shape[-2] == 1
+
+
 def run_inference(dataset, sampler, device, save_dir: str, cfg, n_samples: int, start_sample: int = 0) -> None:
     sdr_list = []
     mixture_snr_list = []
@@ -151,6 +154,7 @@ def run_inference(dataset, sampler, device, save_dir: str, cfg, n_samples: int, 
         mix_in = mixture.unsqueeze(0).to(device)
         mixture_dev = mixture.to(device)
         sources_dev = sources.to(device)
+        single_channel_mode = _is_single_channel_tensor(mixture_dev)
 
         current_sdrs = []
         current_mixsnrs = []
@@ -173,17 +177,22 @@ def run_inference(dataset, sampler, device, save_dir: str, cfg, n_samples: int, 
                 sources_eval = sources_dev
 
             separated_sources = outs.reshape(1, cfg.num_speakers, -1)
-            _, separated_sources_mc = sampler.spatialization(separated_sources, mixture_eval.unsqueeze(0))
 
-            sdr = batch_SDR_torch(separated_sources_mc[:, :, 0, :], sources_eval[:, 0, :].unsqueeze(0))
+            if single_channel_mode:
+                est_eval = separated_sources
+                mix_snr_val = float("nan")
+            else:
+                _, separated_sources_mc = sampler.spatialization(separated_sources, mixture_eval.unsqueeze(0))
+                est_eval = separated_sources_mc[:, :, 0, :]
+                mix_snr = sampler.spatialization.calc_snr(
+                    mixture_eval[0].detach(), separated_sources_mc[0, :, 0, :].sum(0).detach()
+                )
+                mix_snr_val = float(mix_snr)
+
+            sdr = batch_SDR_torch(est_eval, sources_eval[:, 0, :].unsqueeze(0))
             sdr_val = float(sdr.item())
 
-            mix_snr = sampler.spatialization.calc_snr(
-                mixture_eval[0].detach(), separated_sources_mc[0, :, 0, :].sum(0).detach()
-            )
-            mix_snr_val = float(mix_snr)
-
-            print(f"utt_id={utt_id} idx={i} trial={n_trials} SDR={sdr_val:.3f} MixSNR={mix_snr_val:.3f}")
+            print(f"utt_id={utt_id} idx={i} trial={n_trials} SDR={sdr_val:.3f} MixSNR={mix_snr_val}")
 
             current_outs.append(outs.squeeze(0).detach().cpu())
             current_sdrs.append(sdr_val)
@@ -208,9 +217,13 @@ def run_inference(dataset, sampler, device, save_dir: str, cfg, n_samples: int, 
         save_separated_samples(current_outs, save_dir, utt_id, sr=cfg.sample_rate)
 
         best_outs = current_outs[best_trial].to(device)
-        _, best_mc = sampler.spatialization(best_outs.unsqueeze(0), mixture_eval.unsqueeze(0))
 
-        est_ch0 = best_mc[0, :, 0, :].detach().cpu()
+        if single_channel_mode:
+            est_ch0 = best_outs.detach().cpu()
+        else:
+            _, best_mc = sampler.spatialization(best_outs.unsqueeze(0), mixture_eval.unsqueeze(0))
+            est_ch0 = best_mc[0, :, 0, :].detach().cpu()
+
         ref_ch0 = sources_eval[:, 0, :].detach().cpu()
 
         best_sisdr = float(sisdr_batch(est_ch0, ref_ch0))
@@ -306,6 +319,10 @@ def main():
 
     cfg.sample_rate = 8000
 
+    if cfg.n_channels == 1:
+        cfg.use_warm_initialization = False
+        print("[info] n_channels == 1 detected: disable warm initialization and bypass multichannel spatialization in evaluation.")
+
     args_dict = vars(cfg)
     modify_and_create_save_dir(args_dict)
     cfg.save_dir = args_dict["save_dir"]
@@ -318,21 +335,12 @@ def main():
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    # dirname = os.getcwd()
-    # args.model_dir = os.path.join(dirname, str(args.model_dir))
-    # os.makedirs(args.model_dir, exist_ok=True)
-    # If CLI provides --model_dir, override YAML model_dir
     if cfg.model_dir is not None and str(cfg.model_dir).strip() != "":
         args.model_dir = cfg.model_dir
 
-    # Normalize: only prepend cwd for relative paths
     args.model_dir = str(args.model_dir)
     if not os.path.isabs(args.model_dir):
         args.model_dir = os.path.join(os.getcwd(), args.model_dir)
-
-    # NOTE: for inference we should NOT create model_dir automatically,
-    # because a missing dir is a real error (wrong path).
-    # So we don't os.makedirs(args.model_dir) here.
 
     args.architecture = cfg.architecture
     args.inference.checkpoint = cfg.checkpoint
@@ -387,6 +395,7 @@ def main():
         n_frames_future=cfg.n_frames_future,
         fcp_epsilon=cfg.fcp_epsilon,
         n_spks=cfg.num_speakers,
+        n_ch=cfg.n_channels,
         use_warm_initialization=cfg.use_warm_initialization,
         warm_initialization_rescale=cfg.warm_initialization_rescale,
         warm_initialization_sigma=cfg.warm_initialization_sigma,

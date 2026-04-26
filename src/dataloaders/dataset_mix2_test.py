@@ -8,6 +8,8 @@ import torchaudio
 
 
 def _default_channel_indices(num_channels: int) -> Optional[List[int]]:
+    if num_channels == 1:
+        return [0]
     if num_channels == 3:
         return [0, 2, 4]
     return None
@@ -46,7 +48,7 @@ class Mix2TestDataset(torch.utils.data.Dataset):
         split: str = "test",
         sample_rate: int = 8000,
         n_src: int = 2,
-        num_channels: int = 6,                   # 6 or 3 (3 -> [0,2,4])
+        num_channels: int = 6,                   # 6 or 3 or 1 (3 -> [0,2,4], 1 -> [0])
         select_channels: Optional[List[int]] = None,  # override indices
         mixture_folder: str = "observation",     # "observation" or "mix"
         early_folder: str = "early",
